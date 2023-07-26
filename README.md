@@ -9,7 +9,7 @@ pip install -r requirements.txt
 
 ## Datasets
 
-BattleDIM Dataset can be downloaded here: https://battledim.ucy.ac.cy/?page_id=33
+BattleDIM Dataset can be downloaded here: [(https://drive.google.com/drive/folders/1aNVGmHvBOA0zytIC4F8DWWbNPNBykimf?usp=drive_link)
 please create a dataset folder in the repository and load the data from there
 
 
