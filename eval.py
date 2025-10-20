@@ -1,14 +1,29 @@
+import argparse
 import datetime
 import json
-import sys
 import os
-import torch
-import torch_geometric as pyg
+import random
+import sys
+
+import numpy as np
 import pytorch_lightning as pl
+import torch
 from torch_geometric.loader import DataLoader
-import argparse
+
 from models.liquor_gnn import LiquorGNNModelPL
 from dataset import BattleDIMDataset
+
+
+def _set_deterministic(seed: int) -> None:
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def getArgs(argv=None):
@@ -34,6 +49,7 @@ def getArgs(argv=None):
 if __name__ == "__main__":
     args = getArgs(sys.argv[1:])
     pl.seed_everything(args.seed)
+    _set_deterministic(args.seed)
 
     starttime = datetime.datetime.now()
     starttime = starttime.strftime("%H:%M:%S")
@@ -48,7 +64,8 @@ if __name__ == "__main__":
         logger=True,
         enable_checkpointing=False,
         max_epochs=0,
-        gpus=0 if args.no_cuda else 1,
+        accelerator="cpu" if args.no_cuda else "gpu",
+        devices=1,
     )
 
     val_ds = BattleDIMDataset("./", mode="val")
