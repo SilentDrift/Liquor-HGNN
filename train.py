@@ -1,15 +1,37 @@
 import argparse
+import os
+import random
 import sys
+
+import numpy as np
+import pytorch_lightning as pl
 import torch
 from torch_geometric.data import LightningDataset
-import pytorch_lightning as pl
 from torch_geometric.loader import DataLoader
+
 from models.liquor_gnn import LiquorGNNModelPL
 from dataset import BattleDIMDataset
 
 
+def _set_deterministic(seed: int) -> None:
+    """Force deterministic behaviour across the training stack."""
+
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 def train(data_module, args):
-    model = LiquorGNNModelPL(train_ds.get(0).metadata(), args)
+    _set_deterministic(args.seed)
+
+    sample = data_module.train_dataset.get(0)
+    model = LiquorGNNModelPL(sample.metadata(), args)
     model.create_mapping(data_module.train_dataset)
 
     auto_lr = True if args.lr == "auto" else False
@@ -61,6 +83,7 @@ def getArgs(argv=None):
 if __name__ == "__main__":
     args = getArgs(sys.argv[1:])
     pl.seed_everything(args.seed)
+    _set_deterministic(args.seed)
 
     train_ds = BattleDIMDataset("./", mode="train")
 
